@@ -1,5 +1,6 @@
 <?php
 namespace mvc;
+
 use mysqli;
 
 /**
@@ -11,10 +12,10 @@ use mysqli;
 class Employee
 {
 
-    CONST DB_HOST = 'localhost'; //Host name<br>
-    CONST DB_USER = 'root'; //Host Username<br>
-    CONST DB_PASS = ''; //Host Password<br>
-    CONST DB_NAME = 'php-final'; //Database name<br><br>
+    const DB_HOST = 'localhost'; //Host name<br>
+    const DB_USER = 'root'; //Host Username<br>
+    const DB_PASS = ''; //Host Password<br>
+    const DB_NAME = 'php-final'; //Database name<br><br>
 
     private $id;
     private $lastName;
@@ -103,17 +104,22 @@ class Employee
     }
 
 
-
-    public static function find($id){
+    public static function find($id)
+    {
         $mysqli = self::openMySQLConnection();
-        if (!isset($mysqli)){
+        if (!isset($mysqli)) {
             self::errors("Unable to obtain MySql connection.");
             return null;
         }
-        $query = "select Id, last_name AS \"LastName\", first_name AS \"FirstName\", email AS \"Email\" from employee where id = $id";
+        $query = "select Id, 
+                         last_name AS \"LastName\", 
+                         first_name AS \"FirstName\", 
+                         email AS \"Email\" 
+                    from employee 
+                  where id = $id";
         $employees = $mysqli->query($query, MYSQLI_USE_RESULT);
         $result = null;
-        if (!empty($employees)){
+        if (!empty($employees)) {
             foreach ($employees as $employee) {
                 $result = $employee;
             }
@@ -122,13 +128,14 @@ class Employee
         return $result;
     }
 
-    public static function findAll(){
+    public static function findAll()
+    {
         $mysqli = self::openMySQLConnection();
-        if (!isset($mysqli)){
+        if (!isset($mysqli)) {
             self::errors("Unable to obtain MySql connection.");
             return null;
         }
-        $query = "select Id, last_name AS \"LastName\", first_name AS \"FirstName\", email AS \"Email\" from employee";
+        $query = "SELECT Id, last_name AS \"LastName\", first_name AS \"FirstName\", email AS \"Email\" FROM employee";
         $employees = $mysqli->query($query, MYSQLI_USE_RESULT);
         $result = [];
         foreach ($employees as $employee) {
@@ -138,29 +145,36 @@ class Employee
         return $result;
     }
 
-    public function save(){
-        if (!$this->validate()){
+    public function save()
+    {
+        if (!$this->validate()) {
             return false;
         }
         $mysqli = self::openMySQLConnection();
-        if (!isset($mysqli)){
+        if (!isset($mysqli)) {
             $this->errors("Unable to obtain MySql connection.");
             return false;
         }
         $id = null;
         $results = null;
         if (empty($this->id)) {
-            $query = "insert into employee(last_name, first_name, email) VALUES ('$this->lastName', " . (!empty($this->firstName)? "'$this->firstName'" : "null") . ", '$this->email')";
+            $firstName = (!empty($this->firstName) ? "'$this->firstName'" : "null");
+            $query = "insert into employee(last_name, first_name, email) 
+                         VALUES ('$this->lastName', $firstName, '$this->email')";
             $results = $mysqli->query($query);
-            if (!$results || $mysqli->insert_id === 0){
+            if (!$results || $mysqli->insert_id === 0) {
                 $this->errors("Error creating Employee:  $mysqli->error");
                 $results = false;
             }
         } else {
             $firstName = !empty($this->firstName) ? "'$this->firstName'" : "null";
-            $query = "update employee set last_name = '$this->lastName', first_name = $firstName, email = '$this->email' where id = $this->id";
+            $query = "update employee 
+                         set last_name = '$this->lastName', 
+                             first_name = $firstName, 
+                             email = '$this->email' 
+                       where id = $this->id";
             $results = $mysqli->query($query);
-            if (!$results){
+            if (!$results) {
                 $this->errors("Error updating Employee: $mysqli->error");
             }
         }
@@ -168,55 +182,60 @@ class Employee
         return $results;
     }
 
-    public function destroy(){
+    public function destroy()
+    {
         $mysqli = self::openMySQLConnection();
-        if (!isset($mysqli)){
+        if (!isset($mysqli)) {
             $this->errors("Unable to obtain MySql connection.");
             return false;
         }
         $query = "delete from employee where id = $this->id";
         $results = $mysqli->query($query);
-        if (!$results){
+        if (!$results) {
             $this->errors("Error deleting Employee: $mysqli->error");
         }
         self::closeMySQLConnection();
         return $results;
     }
 
-    public function validate(){
-        if (empty($this->lastName)){
+    public function validate()
+    {
+        if (empty($this->lastName)) {
             $this->errors("Last Name is required");
         }
-        if (strlen($this->lastName) > 60){
+        if (strlen($this->lastName) > 60) {
             $this->errors("Last Name max length is 60");
         }
-        if (!empty($this->firstName) and strlen($this->firstName) > 60){
+        if (!empty($this->firstName) and strlen($this->firstName) > 60) {
             $this->errors("First Name max length is 60");
         }
-        if (empty($this->email)){
+        if (empty($this->email)) {
             $this->errors("Email is required");
         }
-        if (strlen($this->email) > 255){
+        if (strlen($this->email) > 255) {
             $this->errors("Email max length is 255");
         }
         return empty($this->errorMessages);
     }
 
-    public function errors($errMsg = null){
-        if (empty($errMsg)){
+    public function errors($errMsg = null)
+    {
+        if (empty($errMsg)) {
             $errReturn = $this->errorMessages;
             $this->errorMessages = null;
             return $errReturn;
         }
         $this->errorMessages[] = $errMsg;
+        return null;
     }
 
-    private static function openMySQLConnection(){
-        if(!isset(self::$mysqli)) {
-
+    private static function openMySQLConnection()
+    {
+        if (!isset(self::$mysqli)) {
             $tmysqli = new mysqli(self::DB_HOST, self::DB_USER, self::DB_PASS, self::DB_NAME);
             if ($tmysqli->connect_errno) {
-                self::errors("Failed to connect to MySQL: (" . $tmysqli->connect_errno . ") " . $tmysqli->connect_error);
+                self::errors("Failed to connect to MySQL: (" . $tmysqli->connect_errno . ") " .
+                    $tmysqli->connect_error);
                 return null;
             }
             self::$mysqli = $tmysqli;
@@ -224,7 +243,8 @@ class Employee
         return self::$mysqli;
     }
 
-    private static function closeMySQLConnection(){
+    private static function closeMySQLConnection()
+    {
         self::$mysqli->close();
         self::$mysqli = null;
     }
