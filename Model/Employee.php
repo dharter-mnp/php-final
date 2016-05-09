@@ -1,7 +1,7 @@
 <?php
 namespace mvc;
+require_once($_SERVER['DOCUMENT_ROOT'] . "/../Model/MySQLConnection.php");
 
-use mysqli;
 
 /**
  * Created by PhpStorm.
@@ -9,20 +9,16 @@ use mysqli;
  * Date: 5/4/2016
  * Time: 2:45 PM
  */
-class Employee
+class Employee 
 {
 
-    const DB_HOST = 'localhost'; //Host name<br>
-    const DB_USER = 'root'; //Host Username<br>
-    const DB_PASS = ''; //Host Password<br>
-    const DB_NAME = 'php-final'; //Database name<br><br>
+    use MySQLConnection;
 
     private $id;
     private $lastName;
     private $firstName;
     private $email;
     private $errorMessages;
-    private static $mysqli = null;
 
     /**
      * Employee constructor.
@@ -165,6 +161,8 @@ class Employee
             if (!$results || $mysqli->insert_id === 0) {
                 $this->errors("Error creating Employee:  $mysqli->error");
                 $results = false;
+            } else {
+                $this->id = $mysqli->insert_id;
             }
         } else {
             $firstName = !empty($this->firstName) ? "'$this->firstName'" : "null";
@@ -229,23 +227,4 @@ class Employee
         return null;
     }
 
-    private static function openMySQLConnection()
-    {
-        if (!isset(self::$mysqli)) {
-            $tmysqli = new mysqli(self::DB_HOST, self::DB_USER, self::DB_PASS, self::DB_NAME);
-            if ($tmysqli->connect_errno) {
-                self::errors("Failed to connect to MySQL: (" . $tmysqli->connect_errno . ") " .
-                    $tmysqli->connect_error);
-                return null;
-            }
-            self::$mysqli = $tmysqli;
-        }
-        return self::$mysqli;
-    }
-
-    private static function closeMySQLConnection()
-    {
-        self::$mysqli->close();
-        self::$mysqli = null;
-    }
 }
