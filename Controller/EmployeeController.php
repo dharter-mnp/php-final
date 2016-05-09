@@ -1,7 +1,6 @@
 <?php
 namespace mvc;
 
-require_once($_SERVER['DOCUMENT_ROOT'] . "/../Model/Employee.php");
 /**
  * Created by PhpStorm.
  * User: DHarter
@@ -34,14 +33,15 @@ class EmployeeController
 
     public function create()
     {
-        $emp = $this->instantiateEmployeeFromRequest('POST');
-        if (!empty($emp->getId())) {
+        $employee = $this->instantiateEmployeeFromRequest('POST');
+        if (!empty($employee->getId())) {
             self::returnErrorResponse(400, 'Unexpected employee Id.');
             exit();
         }
-        $created = $emp->save();
+        
+        $created = $employee->save();
         if (!$created) {
-            $errors = ["Errors" => $emp->errors()];
+            $errors = ["Errors" => $employee->errors()];
             self::returnErrorResponse(400, $errors);
             exit();
         }
@@ -50,20 +50,20 @@ class EmployeeController
 
     public function edit()
     {
-        $emp = $this->instantiateEmployeeFromRequest('PUT');
-        if (empty($emp->getId())) {
+        $employee = $this->instantiateEmployeeFromRequest('PUT');
+        if (empty($employee->getId())) {
             self::returnErrorResponse(400, 'Employee Id required.');
             exit();
         }
-        $empCheck = Employee::find($emp->getId());
-        if (empty($empCheck) || !isset($empCheck["Id"]) || $empCheck["Id"] != $emp->getId()) {
+        $empCheck = Employee::find($employee->getId());
+        if (empty($empCheck) || !isset($empCheck["Id"]) || $empCheck["Id"] != $employee->getId()) {
             self::returnErrorResponse(400, 'Invalid employee Id');
             exit();
         }
 
-        $updated = $emp->save();
+        $updated = $employee->save();
         if (!$updated) {
-            $errors = ["Errors" => $emp->errors()];
+            $errors = ["Errors" => $employee->errors()];
             self::returnErrorResponse(400, $errors);
             exit();
         }
@@ -72,15 +72,15 @@ class EmployeeController
 
     public function destroy()
     {
-        $emp = $this->instantiateEmployeeFromRequest('DELETE');
-        $empCheck = Employee::find($emp->getId());
-        if (empty($empCheck) || !isset($empCheck["Id"]) || $empCheck["Id"] != $emp->getId()) {
+        $employee = $this->instantiateEmployeeFromRequest('DELETE');
+        $empCheck = Employee::find($employee->getId());
+        if (empty($empCheck) || !isset($empCheck["Id"]) || $empCheck["Id"] != $employee->getId()) {
             self::returnErrorResponse(400, 'Invalid employee Id');
             exit();
         }
-        $destroyed = $emp->destroy();
+        $destroyed = $employee->destroy();
         if (!$destroyed) {
-            $errors = ["Errors" => $emp->errors()];
+            $errors = ["Errors" => $employee->errors()];
             self::returnErrorResponse(400, $errors);
             exit();
         }

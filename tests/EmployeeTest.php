@@ -2,6 +2,8 @@
 namespace mvc;
 
 require_once($_SERVER['DOCUMENT_ROOT'] . "/../Model/Employee.php");
+require_once($_SERVER['DOCUMENT_ROOT'] . "/../Repository/MySQLConnection.php");
+
 use Faker\Factory as Faker;
 use PHPUnit_Framework_TestCase;
 
@@ -174,7 +176,7 @@ class EmployeeTest extends PHPUnit_Framework_TestCase
         /*Verify the Employee record count increased.*/
         $afterInsertNumberEmployees = $this->getNumberEmployees();
         $this->assertEquals(
-            $originalNumberEmployees+1,
+            $originalNumberEmployees + 1,
             $afterInsertNumberEmployees,
             'Employee count did not increase after insert'
         );
@@ -257,7 +259,7 @@ class EmployeeTest extends PHPUnit_Framework_TestCase
         /*Verify the record count decreased*/
         $afterDeleteNumberEmployees = $this->getNumberEmployees();
         $this->assertEquals(
-            $afterUpdateNumberEmployees-1,
+            $afterUpdateNumberEmployees - 1,
             $afterDeleteNumberEmployees,
             'Employee count did not decrease after delete'
         );

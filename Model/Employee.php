@@ -1,6 +1,10 @@
 <?php
 namespace mvc;
-require_once($_SERVER['DOCUMENT_ROOT'] . "/../Model/MySQLConnection.php");
+
+require_once($_SERVER['DOCUMENT_ROOT'] . "/../Model/Employee.php");
+require_once($_SERVER['DOCUMENT_ROOT'] . "/../Repository/EmployeeRepository.php");
+
+use mvc\EmployeeRepository as Repository;
 
 
 /**
@@ -9,16 +13,14 @@ require_once($_SERVER['DOCUMENT_ROOT'] . "/../Model/MySQLConnection.php");
  * Date: 5/4/2016
  * Time: 2:45 PM
  */
-class Employee 
+class Employee
 {
-
-    use MySQLConnection;
-
     private $id;
     private $lastName;
     private $firstName;
     private $email;
-    private $errorMessages;
+    private $errorMessages = array();
+    private $repository;
 
     /**
      * Employee constructor.
@@ -33,6 +35,7 @@ class Employee
         $this->lastName = $lastName;
         $this->firstName = $firstName;
         $this->email = $email;
+        $this->repository = new Repository();
     }
 
     /**
@@ -99,46 +102,17 @@ class Employee
         $this->email = $email;
     }
 
-
     public static function find($id)
     {
-        $mysqli = self::openMySQLConnection();
-        if (!isset($mysqli)) {
-            self::errors("Unable to obtain MySql connection.");
+        if (empty($id)) {
             return null;
         }
-        $query = "select Id, 
-                         last_name AS \"LastName\", 
-                         first_name AS \"FirstName\", 
-                         email AS \"Email\" 
-                    from employee 
-                  where id = $id";
-        $employees = $mysqli->query($query, MYSQLI_USE_RESULT);
-        $result = null;
-        if (!empty($employees)) {
-            foreach ($employees as $employee) {
-                $result = $employee;
-            }
-        }
-        self::closeMySQLConnection();
-        return $result;
+        return Repository::find($id);
     }
 
     public static function findAll()
     {
-        $mysqli = self::openMySQLConnection();
-        if (!isset($mysqli)) {
-            self::errors("Unable to obtain MySql connection.");
-            return null;
-        }
-        $query = "SELECT Id, last_name AS \"LastName\", first_name AS \"FirstName\", email AS \"Email\" FROM employee";
-        $employees = $mysqli->query($query, MYSQLI_USE_RESULT);
-        $result = [];
-        foreach ($employees as $employee) {
-            $result[] = $employee;
-        }
-        self::closeMySQLConnection();
-        return $result;
+        return Repository::findAll();
     }
 
     public function save()
@@ -146,56 +120,19 @@ class Employee
         if (!$this->validate()) {
             return false;
         }
-        $mysqli = self::openMySQLConnection();
-        if (!isset($mysqli)) {
-            $this->errors("Unable to obtain MySql connection.");
-            return false;
-        }
-        $id = null;
-        $results = null;
-        if (empty($this->id)) {
-            $firstName = (!empty($this->firstName) ? "'$this->firstName'" : "null");
-            $query = "insert into employee(last_name, first_name, email) 
-                         VALUES ('$this->lastName', $firstName, '$this->email')";
-            $results = $mysqli->query($query);
-            if (!$results || $mysqli->insert_id === 0) {
-                $this->errors("Error creating Employee:  $mysqli->error");
-                $results = false;
-            } else {
-                $this->id = $mysqli->insert_id;
-            }
-        } else {
-            $firstName = !empty($this->firstName) ? "'$this->firstName'" : "null";
-            $query = "update employee 
-                         set last_name = '$this->lastName', 
-                             first_name = $firstName, 
-                             email = '$this->email' 
-                       where id = $this->id";
-            $results = $mysqli->query($query);
-            if (!$results) {
-                $this->errors("Error updating Employee: $mysqli->error");
-            }
-        }
-        self::closeMySQLConnection();
-        return $results;
+
+        return $this->repository->save($this);
     }
 
     public function destroy()
     {
-        $mysqli = self::openMySQLConnection();
-        if (!isset($mysqli)) {
-            $this->errors("Unable to obtain MySql connection.");
+        if (empty($this->id)) {
+            $this->errors("No employee id specified.");
             return false;
         }
-        $query = "delete from employee where id = $this->id";
-        $results = $mysqli->query($query);
-        if (!$results) {
-            $this->errors("Error deleting Employee: $mysqli->error");
-        }
-        self::closeMySQLConnection();
-        return $results;
+        return $this->repository->destroy($this);
     }
-
+    
     public function validate()
     {
         if (empty($this->lastName)) {
@@ -226,5 +163,4 @@ class Employee
         $this->errorMessages[] = $errMsg;
         return null;
     }
-
 }
