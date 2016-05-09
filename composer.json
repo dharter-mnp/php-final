@@ -1,0 +1,17 @@
+{
+  "name": "rp/php-final",
+  "description": "description_text",
+  "minimum-stability": "stable",
+  "license": "proprietary",
+  "authors": [
+    {
+      "name": "Dianna Harter",
+      "email": "dharter@mynewplace.com"
+    }
+  ],
+  "require": {
+    "mockery/mockery": "0.9.4",
+    "phpunit/phpunit": "5.3.2",
+    "fzaninotto/faker": "v1.6.0"
+  }
+}
