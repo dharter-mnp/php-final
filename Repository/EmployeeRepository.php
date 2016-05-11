@@ -8,107 +8,132 @@
 
 namespace mvc;
 
+use PDO;
+use PDOException;
+
 require_once($_SERVER['DOCUMENT_ROOT'] . "/../Repository/RepositoryInterface.php");
-require_once($_SERVER['DOCUMENT_ROOT'] . "/../Repository/MySQLConnection.php");
 
 class EmployeeRepository implements RepositoryInterface
 {
 
-    use MySQLConnection;
+    private $connection;
+
+    /**
+     * EmployeeRepository constructor.
+     */
+    public function __construct()
+    {
+        $this->connection = self::instantiateConnection();
+    }
+
+    private static function instantiateConnection()
+    {
+        $conn = new PDO(
+            "mysql:host=" . self::DB_HOST . ";dbname=" . self::DB_NAME,
+            self::DB_USER,
+            self::DB_PASS
+        );
+        $conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+        return $conn;
+
+    }
 
     public static function find($id)
     {
         if (empty($id)) {
             return null;
         }
-        $mysqli = self::openMySQLConnection();
-        if (!isset($mysqli)) {
-            //self::errors("Unable to obtain MySql connection.");
-            return null;
-        }
+        $connection = self::instantiateConnection();
         $query = "SELECT Id, 
                          last_name AS \"LastName\", 
                          first_name AS \"FirstName\", 
                          email AS \"Email\" 
                     FROM employee 
-                  WHERE id = $id";
-        $employees = $mysqli->query($query, MYSQLI_USE_RESULT);
-        $result = null;
-        if (!empty($employees)) {
-            foreach ($employees as $employee) {
-                $result = $employee;
-            }
+                  WHERE id = :id";
+        $statement = $connection->prepare($query);
+        $statement->execute(['id' => $id]);
+        $result = [];
+
+        while ($employee = $statement->fetch()) {
+            $result = $employee;
+            break;
         }
-        self::closeMySQLConnection();
+
+        if (empty($result)) {
+            $result = null;
+        }
+
         return $result;
     }
 
     public static function findAll()
     {
-        $mysqli = self::openMySQLConnection();
-        if (!isset($mysqli)) {
-            //self::errors("Unable to obtain MySql connection.");
-            return null;
-        }
+        $connection = self::instantiateConnection();
         $query = "SELECT Id, last_name AS \"LastName\", first_name AS \"FirstName\", email AS \"Email\" FROM employee";
-        $employees = $mysqli->query($query, MYSQLI_USE_RESULT);
-        $result = [];
-        foreach ($employees as $employee) {
-            $result[] = $employee;
-        }
-        self::closeMySQLConnection();
+        $statement = $connection->prepare($query);
+        $statement->execute();
+        $result = $statement->fetchAll();
         return $result;
     }
 
-    public function save($employee)
+    public function save(&$employee)
     {
-        $mysqli = self::openMySQLConnection();
-        if (!isset($mysqli)) {
-            $employee->errors("Unable to obtain MySql connection.");
-            return false;
-        }
         $id = null;
         $results = null;
+        $firstName = !empty($employee->getFirstName()) ?  $employee->getFirstName()  : "null";
         if (empty($employee->getId())) {
-            $firstName = !empty($employee->getFirstName()) ? "'" . $employee->getFirstName() . "'" : "null";
-            $query = "insert into employee(last_name, first_name, email) 
-                         VALUES ('" . $employee->getLastName() . "', $firstName, '" . $employee->getEmail() . "')";
-            $results = $mysqli->query($query);
-            if (!$results || $mysqli->insert_id === 0) {
-                $employee->errors("Error creating Employee:  $mysqli->error");
+            $query = "INSERT INTO employee(last_name, first_name, email) 
+                         VALUES (:lastName, :firstName, :email)";
+            try {
+                $statement = $this->connection->prepare($query);
+                $results = $statement->execute([
+                    'lastName' => $employee->getLastName(),
+                    'firstName' => $firstName,
+                    'email' => $employee->getEmail()
+                ]);
+                $id = $this->connection->lastInsertId();
+                if ($id === 0) {
+                    $employee->errors("Error creating Employee:  Invalid Id 0");
+                    $results = false;
+                } else {
+                    $employee->setId($id);
+                }
+            } catch (PDOException $e) {
+                $employee->errors("Error creating Employee: " . $e->getMessage());
                 $results = false;
-            } else {
-                $employee->setId($mysqli->insert_id);
             }
         } else {
-            $firstName = !empty($employee->getFirstName()) ? "'" . $employee->getFirstName() . "'" : "null";
-            $query = "update employee 
-                         set last_name = '" . $employee->getLastName() . "', 
-                             first_name = $firstName, 
-                             email = '" . $employee->getEmail() . "' 
-                       where id = " . $employee->getId();
-            $results = $mysqli->query($query);
-            if (!$results) {
-                $employee->errors("Error updating Employee: $mysqli->error");
+            $query = "UPDATE employee 
+                         SET last_name = :lastName, 
+                             first_name = :firstName, 
+                             email = :email 
+                       WHERE id = :id";
+            try {
+                $statement = $this->connection->prepare($query);
+                $results = $statement->execute([
+                    'lastName' => $employee->getLastName(),
+                    'firstName' => $firstName,
+                    'email' => $employee->getEmail(),
+                    'id' => $employee->getId()
+                ]);
+            } catch (PDOException $e) {
+                $employee->errors("Error updating Employee: " . $e->getMessage());
+                $results = false;
             }
         }
-        self::closeMySQLConnection();
         return $results;
     }
 
     public function destroy($employee)
     {
-        $mysqli = self::openMySQLConnection();
-        if (!isset($mysqli)) {
-            $employee->errors("Unable to obtain MySql connection.");
-            return false;
+        $query = "DELETE FROM employee WHERE id = :id";
+        try {
+            $statement = $this->connection->prepare($query);
+            $results = $statement->execute(['id' => $employee->getId()]);
+        } catch (PDOException $e) {
+            $employee->errors("Error deleting Employee: " . $e->getMessage());
+            $results = false;
         }
-        $query = "DELETE FROM employee WHERE id = " . $employee->getId();
-        $results = $mysqli->query($query);
-        if (!$results) {
-            $employee->errors("Error deleting Employee: $mysqli->error");
-        }
-        self::closeMySQLConnection();
         return $results;
     }
 }
