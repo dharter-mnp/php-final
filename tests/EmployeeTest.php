@@ -48,12 +48,8 @@ class EmployeeTest extends PHPUnit_Framework_TestCase
         First Name length > 60 characters
         Email length > 255 characters*/
 
-        do {
-            $lastName = $lastName . $this->faker->lastName;
-        } while (strlen($lastName) < 61);
-        do {
-            $firstName = $firstName . $this->faker->firstName;
-        } while (strlen($firstName) < 61);
+        $lastName = $this->faker->regexify('[A-Z][a-z]{60,100}');
+        $firstName = $this->faker->regexify('[A-Z][a-z]{60,100}');
         $email = $this->faker->regexify('[A-Z0-9._%+-]{120,200}@[A-Z0-9.-]{131,200}\.[A-Z]{2,4}');
         $employee = new Employee(null, $lastName, $firstName, $email);
 
@@ -61,18 +57,9 @@ class EmployeeTest extends PHPUnit_Framework_TestCase
         $this->assertFalse($employee->validate(), "Employee validation expected to fail.");
         $errors = $employee->errors();
 
-        $this->assertTrue(
-            in_array("Last Name max length is 60", $errors, true),
-            "Last Name max length validation missing"
-        );
-        $this->assertTrue(
-            in_array("First Name max length is 60", $errors, true),
-            "Last Name max length validation missing"
-        );
-        $this->assertTrue(
-            in_array("Email max length is 255", $errors, true),
-            "Email max length validation missing"
-        );
+        $this->assertContains("Last Name max length is 60", $errors, "Last Name max length validation missing");
+        $this->assertContains("First Name max length is 60", $errors, "Last Name max length validation missing");
+        $this->assertContains("Email max length is 255", $errors, "Email max length validation missing");
 
         /*Check null validation:
         Last Name 
@@ -84,57 +71,29 @@ class EmployeeTest extends PHPUnit_Framework_TestCase
         $this->assertFalse($employee->validate(), "Employee validation expected to fail.");
         $errors = $employee->errors();
 
-        $this->assertTrue(
-            in_array("Last Name is required", $errors, true),
-            "Last Name required validation missing"
-        );
-        $this->assertTrue(
-            in_array("First Name max length is 60", $errors, true),
-            "Last Name max length validation missing"
-        );
-        $this->assertTrue(
-            in_array("Email is required", $errors, true),
-            "Email required validation missing"
-        );
+        $this->assertContains("Last Name is required", $errors, "Last Name required validation missing");
+        $this->assertContains("First Name max length is 60", $errors, "Last Name max length validation missing");
+        $this->assertContains("Email is required", $errors, "Email required validation missing");
 
         /*Clear Last Name null validation error.
         Expected First name to fail with max length validation and 
         Email to fail with null validation.*/
-        do {
-            $lastName = $this->faker->lastName;
-        } while (strlen($lastName) > 60);
+        $lastName = $this->faker->regexify('[A-Z][a-z]{1,59}');
         $employee->setLastName($lastName);
         $this->assertFalse($employee->validate(), "Employee validation expected to fail.");
         $errors = $employee->errors();
-        $this->assertFalse(
-            in_array("Last Name is required", $errors, true),
-            "Last Name required validation included"
-        );
-        $this->assertTrue(
-            in_array("First Name max length is 60", $errors, true),
-            "Last Name max length validation missing"
-        );
-        $this->assertTrue(
-            in_array("Email is required", $errors, true),
-            "Email required validation missing"
-        );
+        $this->assertNotContains("Last Name is required", $errors, "Last Name required validation included");
+        $this->assertContains("First Name max length is 60", $errors, "Last Name max length validation missing");
+        $this->assertContains("Email is required", $errors, "Email required validation missing");
 
         /*Clear First name max length validation
         Expected Email to still fail with null validation.*/
-        do {
-            $firstName = $this->faker->firstName;
-        } while (strlen($firstName) > 60);
+        $firstName = $this->faker->regexify('[A-Z][a-z]{1,59}');
         $employee->setFirstName($firstName);
         $this->assertFalse($employee->validate(), "Employee validation expected to fail.");
         $errors = $employee->errors();
-        $this->assertFalse(
-            in_array("First Name max length is 60", $errors, true),
-            "First Name max length validation included"
-        );
-        $this->assertTrue(
-            in_array("Email is required", $errors, true),
-            "Email required validation missing"
-        );
+        $this->assertNotContains("First Name max length is 60", $errors, "First Name max length validation included");
+        $this->assertContains("Email is required", $errors, "Email required validation missing");
 
         /*Clear Email null validation error.
         Expect validation to succeed.*/
@@ -144,22 +103,15 @@ class EmployeeTest extends PHPUnit_Framework_TestCase
         $employee->setEmail($email);
         $this->assertTrue($employee->validate(), "Employee validation expected to succeed.");
         $errors = $employee->errors();
-        $this->assertTrue(
-            empty($errors),
-            "Validation errors haven't cleared."
-        );
+        $this->assertEmpty($errors, "Validation errors haven't cleared.");
 
     }
 
     public function testEmployeeSaveDestroy()
     {
         /*Setup Employee Object*/
-        do {
-            $lastName = $this->faker->lastName;
-        } while (strlen($lastName) > 60);
-        do {
-            $firstName = $this->faker->firstName;
-        } while (strlen($firstName) > 60);
+        $lastName = $this->faker->regexify('[A-Z][a-z]{1,59}');
+        $firstName = $this->faker->regexify('[A-Z][a-z]{1,59}');
         do {
             $email = $this->faker->email;
         } while (strlen($email) > 255);
@@ -211,12 +163,8 @@ class EmployeeTest extends PHPUnit_Framework_TestCase
 
         /*Modify the employee properties and update the record*/
 
-        do {
-            $lastName = $this->faker->lastName;
-        } while (strlen($lastName) > 60);
-        do {
-            $firstName = $this->faker->firstName;
-        } while (strlen($firstName) > 60);
+        $lastName = $this->faker->regexify('[A-Z][a-z]{1,59}');
+        $firstName = $this->faker->regexify('[A-Z][a-z]{1,59}');
         do {
             $email = $this->faker->email;
         } while (strlen($email) > 255);
@@ -278,12 +226,8 @@ class EmployeeTest extends PHPUnit_Framework_TestCase
     public function testMockDB()
     {
         $id = $this->faker->randomDigit;
-        do {
-            $lastName = $this->faker->lastName;
-        } while (strlen($lastName) > 60);
-        do {
-            $firstName = $this->faker->firstName;
-        } while (strlen($firstName) > 60);
+        $lastName = $this->faker->regexify('[A-Z][a-z]{1,59}');
+        $firstName = $this->faker->regexify('[A-Z][a-z]{1,59}');
         do {
             $email = $this->faker->email;
         } while (strlen($email) > 255);
@@ -344,12 +288,8 @@ class EmployeeTest extends PHPUnit_Framework_TestCase
 
         /*Modify the employee properties and update the record*/
 
-        do {
-            $lastName = $this->faker->lastName;
-        } while (strlen($lastName) > 60);
-        do {
-            $firstName = $this->faker->firstName;
-        } while (strlen($firstName) > 60);
+        $lastName = $this->faker->regexify('[A-Z][a-z]{1,59}');
+        $firstName = $this->faker->regexify('[A-Z][a-z]{1,59}');
         do {
             $email = $this->faker->email;
         } while (strlen($email) > 255);
