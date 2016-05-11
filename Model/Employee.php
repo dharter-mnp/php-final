@@ -1,7 +1,6 @@
 <?php
 namespace mvc;
 
-require_once($_SERVER['DOCUMENT_ROOT'] . "/../Model/Employee.php");
 require_once($_SERVER['DOCUMENT_ROOT'] . "/../Repository/EmployeeRepository.php");
 
 use mvc\EmployeeRepository as Repository;
@@ -29,13 +28,13 @@ class Employee
      * @param $firstName
      * @param $email
      */
-    public function __construct($id = null, $lastName = null, $firstName = null, $email = null)
+    public function __construct($id = null, $lastName = null, $firstName = null, $email = null, $dbConnection = null)
     {
         $this->id = $id;
         $this->lastName = $lastName;
         $this->firstName = $firstName;
         $this->email = $email;
-        $this->repository = new Repository();
+        $this->repository = new Repository($dbConnection);
     }
 
     /**
@@ -102,17 +101,17 @@ class Employee
         $this->email = $email;
     }
 
-    public static function find($id)
+    public static function find($id, $dbConnection = null)
     {
         if (empty($id)) {
             return null;
         }
-        return Repository::find($id);
+        return Repository::find($id, $dbConnection);
     }
 
-    public static function findAll()
+    public static function findAll($dbConnection = null)
     {
-        return Repository::findAll();
+        return Repository::findAll($dbConnection);
     }
 
     public function save()

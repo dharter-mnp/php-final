@@ -21,29 +21,35 @@ class EmployeeRepository implements RepositoryInterface
     /**
      * EmployeeRepository constructor.
      */
-    public function __construct()
+    public function __construct($dbConnection = null)
     {
-        $this->connection = self::instantiateConnection();
+        if ($dbConnection == null) {
+            $this->connection = self::instantiateConnection();
+        } else {
+            $this->connection = $dbConnection;
+        }
     }
 
-    private static function instantiateConnection()
+    private static function instantiateConnection($dbConnection = null)
     {
-        $conn = new PDO(
-            "mysql:host=" . self::DB_HOST . ";dbname=" . self::DB_NAME,
-            self::DB_USER,
-            self::DB_PASS
-        );
-        $conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-        return $conn;
+        if ($dbConnection == null) {
+            $dbConnection = new PDO(
+                "mysql:host=" . self::DB_HOST . ";dbname=" . self::DB_NAME,
+                self::DB_USER,
+                self::DB_PASS
+            );
+            $dbConnection->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+        }
+        return $dbConnection;
 
     }
 
-    public static function find($id)
+    public static function find($id, $dbConnection = null)
     {
         if (empty($id)) {
             return null;
         }
-        $connection = self::instantiateConnection();
+        $connection = self::instantiateConnection($dbConnection);
         $query = "SELECT Id, 
                          last_name AS \"LastName\", 
                          first_name AS \"FirstName\", 
@@ -51,12 +57,13 @@ class EmployeeRepository implements RepositoryInterface
                     FROM employee 
                   WHERE id = :id";
         $statement = $connection->prepare($query);
-        $statement->execute(['id' => $id]);
+        $success = $statement->execute(['id' => $id]);
         $result = [];
-
-        while ($employee = $statement->fetch()) {
-            $result = $employee;
-            break;
+        if ($success) {
+            while ($employee = $statement->fetch()) {
+                $result = $employee;
+                break;
+            }
         }
 
         if (empty($result)) {
@@ -66,13 +73,16 @@ class EmployeeRepository implements RepositoryInterface
         return $result;
     }
 
-    public static function findAll()
+    public static function findAll($dbConnection = null)
     {
-        $connection = self::instantiateConnection();
+        $connection = self::instantiateConnection($dbConnection);
         $query = "SELECT Id, last_name AS \"LastName\", first_name AS \"FirstName\", email AS \"Email\" FROM employee";
         $statement = $connection->prepare($query);
-        $statement->execute();
-        $result = $statement->fetchAll();
+        $success = $statement->execute();
+        $result = null;
+        if ($success){
+            $result = $statement->fetchAll();
+        }
         return $result;
     }
 
@@ -82,8 +92,7 @@ class EmployeeRepository implements RepositoryInterface
         $results = null;
         $firstName = !empty($employee->getFirstName()) ?  $employee->getFirstName()  : "null";
         if (empty($employee->getId())) {
-            $query = "INSERT INTO employee(last_name, first_name, email) 
-                         VALUES (:lastName, :firstName, :email)";
+            $query = "INSERT INTO employee(last_name, first_name, email) VALUES (:lastName, :firstName, :email)";
             try {
                 $statement = $this->connection->prepare($query);
                 $results = $statement->execute([
@@ -103,11 +112,12 @@ class EmployeeRepository implements RepositoryInterface
                 $results = false;
             }
         } else {
-            $query = "UPDATE employee 
-                         SET last_name = :lastName, 
-                             first_name = :firstName, 
-                             email = :email 
-                       WHERE id = :id";
+            $query = 
+                "UPDATE employee 
+                 SET last_name = :lastName, 
+                     first_name = :firstName, 
+                     email = :email 
+                 WHERE id = :id";
             try {
                 $statement = $this->connection->prepare($query);
                 $results = $statement->execute([

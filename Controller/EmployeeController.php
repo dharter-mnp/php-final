@@ -1,5 +1,6 @@
 <?php
 namespace mvc;
+require_once($_SERVER['DOCUMENT_ROOT'] . "/../Model/Employee.php");
 
 /**
  * Created by PhpStorm.

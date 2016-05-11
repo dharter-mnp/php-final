@@ -6,6 +6,7 @@ require_once($_SERVER['DOCUMENT_ROOT'] . "/../Repository/MySQLConnection.php");
 
 use Faker\Factory as Faker;
 use PHPUnit_Framework_TestCase;
+use Mockery as Mock;
 
 /**
  * Created by PhpStorm.
@@ -17,16 +18,20 @@ class EmployeeTest extends PHPUnit_Framework_TestCase
 {
     use MySQLConnection;
     private $faker = null;
-
+    private $mockDBConnection;
+    private $mockStatement;
 
     protected function setUp()
     {
         $this->faker = Faker::create();
+        $this->mockDBConnection = Mock::mock('PDO');
+        $this->mockStatement = Mock::mock('PDOStatement');
     }
 
     protected function tearDown()
     {
         self::closeMySQLConnection();
+        Mock::close();
     }
 
 
@@ -268,6 +273,155 @@ class EmployeeTest extends PHPUnit_Framework_TestCase
         $verifyEmployee = Employee::find($employee->getId());
         $this->assertEmpty($verifyEmployee, 'Employee record was found after delete.');
 
+    }
+
+    public function testMockDB()
+    {
+        $id = $this->faker->randomDigit;
+        do {
+        $lastName = $this->faker->lastName;
+    } while (strlen($lastName) > 60);
+        do {
+            $firstName = $this->faker->firstName;
+        } while (strlen($firstName) > 60);
+        do {
+            $email = $this->faker->email;
+        } while (strlen($email) > 255);
+        $errors = null;
+
+        $employee = new Employee(null, $lastName, $firstName, $email, $this->mockDBConnection);
+        $this->mockDBConnection->shouldReceive('prepare')->with(
+            "INSERT INTO employee(last_name, first_name, email) VALUES (:lastName, :firstName, :email)"
+        )->andReturn($this->mockStatement);
+        $this->mockStatement->shouldReceive('execute')->with(['lastName' => $employee->getLastName(),
+            'firstName' => $firstName,
+            'email' => $employee->getEmail()])->andReturn(true);
+        $this->mockDBConnection->shouldReceive('lastInsertId')->andReturn($id);
+        $this->assertTrue($employee->save(), 'Employee insert failed');
+        $errors = $employee->errors();
+        $this->assertTrue(empty($errors), 'Errors were returned from Employee insert');
+        if (!empty($errors)) {
+            var_dump($errors);
+        }
+
+        /*Verify the Employee Id was populated and has a valid value*/
+        $this->assertNotEmpty($employee->getId(), 'Employee id is empty after save');
+        $this->assertEquals($id, $employee->getId(), 'Employee id invalid after save');
+
+        $this->mockDBConnection->shouldReceive('prepare')->once()->with('SELECT Id, 
+                         last_name AS "LastName", 
+                         first_name AS "FirstName", 
+                         email AS "Email" 
+                    FROM employee 
+                  WHERE id = :id')->andReturn($this->mockStatement);
+        $this->mockStatement->shouldReceive('execute')->once()->with(['id'=>$id])->andReturn(true);
+        $this->mockStatement->shouldReceive('fetch')->once()->andReturn([
+            "id"=>$id, 
+            "LastName"=>$employee->getLastName(), 
+            "FirstName"=>$employee->getFirstName(), 
+            "Email"=>$employee->getEmail()
+        ]);
+
+        $insertEmployee = Employee::find($id,$this->mockDBConnection);
+        $this->assertNotEmpty($insertEmployee, 'Employee record was not found after insert');
+        $this->assertEquals(
+            $employee->getLastName(),
+            $insertEmployee["LastName"],
+            "Created Employee has invalid Last Name"
+        );
+        $this->assertEquals(
+            $employee->getFirstName(),
+            $insertEmployee["FirstName"],
+            "Created Employee has invalid First Name"
+        );
+        $this->assertEquals(
+            $employee->getEmail(),
+            $insertEmployee["Email"],
+            "Created Employee has invalid Email"
+        );
+
+        /*Modify the employee properties and update the record*/
+
+        do {
+            $lastName = $this->faker->lastName;
+        } while (strlen($lastName) > 60);
+        do {
+            $firstName = $this->faker->firstName;
+        } while (strlen($firstName) > 60);
+        do {
+            $email = $this->faker->email;
+        } while (strlen($email) > 255);
+        $employee->setLastName($lastName);
+        $employee->setFirstName($firstName);
+        $employee->setEmail($email);
+
+        $this->mockDBConnection->shouldReceive('prepare')->with(
+            "UPDATE employee 
+                 SET last_name = :lastName, 
+                     first_name = :firstName, 
+                     email = :email 
+                 WHERE id = :id"
+        )->andReturn($this->mockStatement);
+        $this->mockStatement->shouldReceive('execute')->with(['lastName' => $employee->getLastName(),
+            'firstName' => $employee->getFirstName(),
+            'email' => $employee->getEmail(),
+            'id' => $employee->getId()]
+        )->andReturn(true);
+        $this->assertTrue($employee->save(), 'Employee update failed');
+        $errors = $employee->errors();
+        $this->assertTrue(empty($errors), 'Errors were returned from Employee update');
+        if (!empty($errors)) {
+            var_dump($errors);
+        }
+
+        $this->mockDBConnection->shouldReceive('prepare')->once()->with('SELECT Id, 
+                         last_name AS "LastName", 
+                         first_name AS "FirstName", 
+                         email AS "Email" 
+                    FROM employee 
+                  WHERE id = :id')->andReturn($this->mockStatement);
+        $this->mockStatement->shouldReceive('execute')->once()->with(['id'=>$employee->getId()])->andReturn(true);
+        $this->mockStatement->shouldReceive('fetch')->once()->andReturn([
+            "id"=>$employee->getId(),
+            "LastName"=>$employee->getLastName(),
+            "FirstName"=>$employee->getFirstName(),
+            "Email"=>$employee->getEmail()
+        ]);
+
+        $updateEmployee = Employee::find($id,$this->mockDBConnection);
+        $this->assertNotEmpty($updateEmployee, 'Employee record was not found after update');
+        $this->assertEquals(
+            $employee->getLastName(),
+            $updateEmployee["LastName"],
+            "Updated Employee has invalid Last Name"
+        );
+        $this->assertEquals(
+            $employee->getFirstName(),
+            $updateEmployee["FirstName"],
+            "Updated Employee has invalid First Name"
+        );
+        $this->assertEquals(
+            $employee->getEmail(),
+            $updateEmployee["Email"],
+            "Updated Employee has invalid Email"
+        );
+
+        /*Delete the employee*/
+        $this->mockDBConnection->shouldReceive('prepare')->once()->with('DELETE FROM employee WHERE id = :id')->andReturn($this->mockStatement);
+        $this->mockStatement->shouldReceive('execute')->once()->with(['id'=>$employee->getId()])->andReturn(true);
+        $this->assertTrue($employee->destroy(), 'Employee failed to delete');
+
+        /*Verify the record is no longer in the database*/
+        $this->mockDBConnection->shouldReceive('prepare')->once()->with('SELECT Id, 
+                         last_name AS "LastName", 
+                         first_name AS "FirstName", 
+                         email AS "Email" 
+                    FROM employee 
+                  WHERE id = :id')->andReturn($this->mockStatement);
+        $this->mockStatement->shouldReceive('execute')->once()->with(['id'=>$employee->getId()])->andReturn(false);
+
+        $deleteEmployee = Employee::find($id,$this->mockDBConnection);
+        $this->assertEmpty($deleteEmployee, 'Employee record was found after delete.');
     }
 
     private function getNumberEmployees()
