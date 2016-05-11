@@ -1,5 +1,6 @@
 <?php
 namespace mvc;
+
 require_once($_SERVER['DOCUMENT_ROOT'] . "/../Model/Employee.php");
 
 /**
@@ -39,7 +40,7 @@ class EmployeeController
             self::returnErrorResponse(400, 'Unexpected employee Id.');
             exit();
         }
-        
+
         $created = $employee->save();
         if (!$created) {
             $errors = ["Errors" => $employee->errors()];

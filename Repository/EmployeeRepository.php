@@ -20,6 +20,7 @@ class EmployeeRepository implements RepositoryInterface
 
     /**
      * EmployeeRepository constructor.
+     * @param null $dbConnection
      */
     public function __construct($dbConnection = null)
     {
@@ -80,7 +81,7 @@ class EmployeeRepository implements RepositoryInterface
         $statement = $connection->prepare($query);
         $success = $statement->execute();
         $result = null;
-        if ($success){
+        if ($success) {
             $result = $statement->fetchAll();
         }
         return $result;
@@ -90,7 +91,7 @@ class EmployeeRepository implements RepositoryInterface
     {
         $id = null;
         $results = null;
-        $firstName = !empty($employee->getFirstName()) ?  $employee->getFirstName()  : "null";
+        $firstName = !empty($employee->getFirstName()) ? $employee->getFirstName() : "null";
         if (empty($employee->getId())) {
             $query = "INSERT INTO employee(last_name, first_name, email) VALUES (:lastName, :firstName, :email)";
             try {
@@ -112,7 +113,7 @@ class EmployeeRepository implements RepositoryInterface
                 $results = false;
             }
         } else {
-            $query = 
+            $query =
                 "UPDATE employee 
                  SET last_name = :lastName, 
                      first_name = :firstName, 

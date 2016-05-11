@@ -5,7 +5,6 @@ require_once($_SERVER['DOCUMENT_ROOT'] . "/../Repository/EmployeeRepository.php"
 
 use mvc\EmployeeRepository as Repository;
 
-
 /**
  * Created by PhpStorm.
  * User: DHarter
@@ -27,6 +26,7 @@ class Employee
      * @param $lastName
      * @param $firstName
      * @param $email
+     * @param null $dbConnection
      */
     public function __construct($id = null, $lastName = null, $firstName = null, $email = null, $dbConnection = null)
     {
@@ -131,7 +131,7 @@ class Employee
         }
         return $this->repository->destroy($this);
     }
-    
+
     public function validate()
     {
         if (empty($this->lastName)) {
