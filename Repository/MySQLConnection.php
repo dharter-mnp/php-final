@@ -1,24 +1,53 @@
 <?php
+namespace mvc;
+
 /**
  * Created by PhpStorm.
- * User: DHarter
+ * @author DHarter
  * Date: 5/9/2016
  * Time: 1:52 PM
  */
 
-namespace mvc;
-
 use mysqli;
 
+/**
+ * Class MySQLConnection.  Initiates and destroys connection with the database.
+ * 
+ * @package mvc
+ */
 trait MySQLConnection
 {
-    private static $DB_HOST = 'localhost'; //Host name<br>
-    private static $DB_USER = 'root'; //Host Username<br>
-    private static $DB_PASS = ''; //Host Password<br>
-    private static $DB_NAME = 'php-final'; //Database name<br><br>
+    /**
+     * @type string DB_HOST Contains the server name of the database.
+     */
+    private static $DB_HOST = 'localhost';
 
+
+    /**
+     *@type string DB_User Contains the  name of the user to connect to the database.
+     */
+    private static $DB_USER = 'root';
+
+    /**
+     *@type string DB_PASS Contains the password for the user to connect to the database.
+     */
+    private static $DB_PASS = '';
+
+    /**
+     *@type string DB_NAME Contains the name of the database.
+     */
+    private static $DB_NAME = 'php-final';
+
+    /**
+     * @type null
+     */
     protected static $mysqli = null;
 
+    /**
+     * Instantiates connection to the database.
+     *
+     * @return mysqli|null $mysqli MySQL database connection.
+     */
     protected static function openMySQLConnection()
     {
         if (!isset(self::$mysqli)) {
@@ -33,6 +62,9 @@ trait MySQLConnection
         return self::$mysqli;
     }
 
+    /**
+     * Closes the connection to the database.
+     */
     protected static function closeMySQLConnection()
     {
         if (isset(self::$mysqli)) {

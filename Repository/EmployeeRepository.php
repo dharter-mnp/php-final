@@ -1,21 +1,30 @@
 <?php
+namespace mvc;
+
 /**
  * Created by PhpStorm.
- * User: DHarter
+ * @author DHarter
  * Date: 5/9/2016
  * Time: 3:38 PM
  */
-
-namespace mvc;
 
 use PDO;
 use PDOException;
 
 require_once($_SERVER['DOCUMENT_ROOT'] . "/../Repository/RepositoryInterface.php");
 
+/**
+ * Class EmployeeRepository
+ * Contains the methods for interacting with the database employee object.
+ *
+ * @package mvc
+ */
 class EmployeeRepository implements RepositoryInterface
 {
 
+    /**
+     * @var PDO $connection Database connection object.
+     */
     private $connection;
 
     /**
@@ -31,6 +40,10 @@ class EmployeeRepository implements RepositoryInterface
         }
     }
 
+    /**
+     * @param null $dbConnection
+     * @return null|PDO
+     */
     private static function instantiateConnection($dbConnection = null)
     {
         if ($dbConnection == null) {
@@ -45,6 +58,11 @@ class EmployeeRepository implements RepositoryInterface
 
     }
 
+    /**
+     * @param int $id
+     * @param null $dbConnection
+     * @return array|mixed|null
+     */
     public static function find($id, $dbConnection = null)
     {
         if (empty($id)) {
@@ -74,6 +92,10 @@ class EmployeeRepository implements RepositoryInterface
         return $result;
     }
 
+    /**
+     * @param null $dbConnection
+     * @return array|null
+     */
     public static function findAll($dbConnection = null)
     {
         $connection = self::instantiateConnection($dbConnection);
@@ -87,6 +109,10 @@ class EmployeeRepository implements RepositoryInterface
         return $result;
     }
 
+    /**
+     * @param Object $employee
+     * @return bool|null
+     */
     public function save(&$employee)
     {
         $id = null;
@@ -135,6 +161,10 @@ class EmployeeRepository implements RepositoryInterface
         return $results;
     }
 
+    /**
+     * @param Object $employee
+     * @return bool
+     */
     public function destroy($employee)
     {
         $query = "DELETE FROM employee WHERE id = :id";

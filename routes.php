@@ -3,9 +3,15 @@ namespace mvc;
 
 /**
  * Created by PhpStorm.
- * User: DHarter
+ * @author DHarter
  * Date: 5/5/2016
  * Time: 4:56 PM
+ */
+
+/**
+ * Array of the available controllers and their actions.  First action in the array is the default for the method.
+ * 
+ * @return string[] array of controllers and their methods.
  */
 function getControllers()
 {
@@ -22,6 +28,13 @@ function getControllers()
 
 }
 
+/**
+ * Calls the requested controller with the specified action.  Default action is the initial action 
+ * in the array for the method.
+ * 
+ * @param string $controller Name of the requested controller.
+ * @param string $action Action of the controller to be performed.
+ */
 function call($controller, $action)
 {
     // require the file that matches the controller name

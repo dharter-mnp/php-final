@@ -1,6 +1,13 @@
 <?php
 namespace mvc;
 
+/**
+ * Created by PhpStorm.
+ * @author DHarter
+ * Date: 5/6/2016
+ * Time: 5:03 PM
+ */
+
 require_once($_SERVER['DOCUMENT_ROOT'] . "/../Model/Employee.php");
 require_once($_SERVER['DOCUMENT_ROOT'] . "/../Repository/MySQLConnection.php");
 
@@ -9,18 +16,31 @@ use PHPUnit_Framework_TestCase;
 use Mockery as Mock;
 
 /**
- * Created by PhpStorm.
- * User: DHarter
- * Date: 5/6/2016
- * Time: 5:03 PM
+ * Class EmployeeTest
+ * Class to test the functionality of the Employee object.
+ * @package mvc
  */
 class EmployeeTest extends PHPUnit_Framework_TestCase
 {
     use MySQLConnection;
+    /**
+     * @type \Faker\Factory Instantiated objected of faker package.
+     */
     private $faker = null;
+
+    /**
+     * @type Mock\mock Mocked database connection to mimic interacting with the database.
+     */
     private $mockDBConnection;
+
+    /**
+     * @type Mock\mock Mock statement for interacting with the datbase.
+     */
     private $mockStatement;
 
+    /**
+     * Setup function for initializing $faker, $mockDBConnection, and $mockStatement.
+     */
     protected function setUp()
     {
         $this->faker = Faker::create();
@@ -28,6 +48,9 @@ class EmployeeTest extends PHPUnit_Framework_TestCase
         $this->mockStatement = Mock::mock('PDOStatement');
     }
 
+    /**
+     * Releases necessary setup connections.
+     */
     protected function tearDown()
     {
         self::closeMySQLConnection();
@@ -35,6 +58,12 @@ class EmployeeTest extends PHPUnit_Framework_TestCase
     }
 
 
+    /**
+     * Test the validation method of the Employee object.
+     *
+     * Uses $faker data to setup the Employee object.  Ensures expected validation error messages are returned, and
+     * then ensures validation errors are cleared when using valid data.
+     */
     public function testEmployeeValidation()
     {
         /*Setup Employee Object*/
@@ -107,6 +136,12 @@ class EmployeeTest extends PHPUnit_Framework_TestCase
 
     }
 
+    /**
+     * Test that an employee record is successfully created, updated, and deleted in the database.  Method performs
+     * these actions in the live database.
+     *
+     * Uses $faker data to setup the Employee object.
+     */
     public function testEmployeeSaveDestroy()
     {
         /*Setup Employee Object*/
@@ -223,6 +258,12 @@ class EmployeeTest extends PHPUnit_Framework_TestCase
 
     }
 
+    /**
+     * Test that an employee record is successfully created, updated, and deleted in the database.
+     *
+     * Uses $faker data to setup the Employee object and $mockDBConnection to mimic interacting with the database.
+     * Does not actually perform the actions in the database.
+     */
     public function testMockDB()
     {
         $id = $this->faker->randomDigit;
@@ -368,6 +409,11 @@ class EmployeeTest extends PHPUnit_Framework_TestCase
         $this->assertEmpty($deleteEmployee, 'Employee record was found after delete.');
     }
 
+    /**
+     * Retrieves the count of the number of records in the employee table in the database.
+     *
+     * @return integer $numEmployees Count of the number of records in the employee table.
+     */
     private function getNumberEmployees()
     {
         $mysqli = self::openMySQLConnection();
@@ -384,6 +430,11 @@ class EmployeeTest extends PHPUnit_Framework_TestCase
 
     }
 
+    /**
+     * Retrieves the maximum id of the employee table in the database.
+     *
+     * @return integer $maxId  Maximum id of the employee records.
+     */
     private function getMaxEmployeeId()
     {
         $mysqli = self::openMySQLConnection();

@@ -1,17 +1,32 @@
 <?php
 namespace mvc;
 
+/**
+ * Created by PhpStorm.
+ * @author DHarter
+ * Date: 5/4/2016
+ * Time: 8:30 PM
+ */
+
 require_once($_SERVER['DOCUMENT_ROOT'] . "/../Model/Employee.php");
 
 /**
- * Created by PhpStorm.
- * User: DHarter
- * Date: 5/4/2016
- * Time: 8:30 PM
+ * Class EmployeeController
+ *
+ * This Controller will handle the functionality for the Employee model operations.
+ *
+ * @package mvc
  */
 class EmployeeController
 {
 
+    /**
+     * Handles GET request to retrieve all Employee objects.
+     * Default method for GET requests.  Outputs json response.
+     *
+     * @api
+     * @example http://localhost/employee
+     */
     public function index()
     {
         $employees = Employee::findAll();
@@ -20,6 +35,13 @@ class EmployeeController
         }
     }
 
+    /**
+     * Handles GET request to retrieve a single Employee object.
+     * Outputs json response.
+     *
+     * @api
+     * @example http://localhost/employee/show?id=1
+     */
     public function show()
     {
         if (empty($_GET['id'])) {
@@ -33,6 +55,13 @@ class EmployeeController
         }
     }
 
+    /**
+     * Handles POST request to create an Employee object.
+     * Outputs true or false json response.
+     *
+     * @api
+     * @example http://localhost/employee
+     */
     public function create()
     {
         $employee = $this->instantiateEmployeeFromRequest('POST');
@@ -50,6 +79,13 @@ class EmployeeController
         self::returnSuccessResponse(["created" => true]);
     }
 
+    /**
+     * Handles PUT request to update an Employee object.
+     * Outputs true or false json response.
+     *
+     * @api
+     * @example http://localhost/employee
+     */
     public function edit()
     {
         $employee = $this->instantiateEmployeeFromRequest('PUT');
@@ -72,6 +108,13 @@ class EmployeeController
         self::returnSuccessResponse(["updated" => true]);
     }
 
+    /**
+     * Handles DELETE request to delete an Employee object.
+     * Outputs true or false json response.
+     *
+     * @api
+     * @example http://localhost/employee?id=1
+     */
     public function destroy()
     {
         $employee = $this->instantiateEmployeeFromRequest('DELETE');
@@ -89,11 +132,13 @@ class EmployeeController
         self::returnSuccessResponse(["deleted" => true]);
     }
 
-    public function notFound()
-    {
-
-    }
-
+    /**
+     * Uses the json request body to instantiate an Employee object.
+     *
+     * @uses \mvc\Employee::__construct()
+     * @param string $method 'POST', 'PUT', 'DELETE'
+     * @return /mvc/Employee object
+     */
     private function instantiateEmployeeFromRequest($method)
     {
         $body = null;
@@ -119,6 +164,8 @@ class EmployeeController
                 }
                 parse_str($queryString, $body);
                 break;
+            default:
+                return null;
         }
         $id = (isset($body["Id"]) ? $body["Id"] : null);
         if (empty($id)) {
@@ -133,12 +180,23 @@ class EmployeeController
         return $emp;
     }
 
+    /**
+     * Writes the json success response.
+     *
+     * @param mixed[] $response The array to be returned in the successful response.  Will be converted to json format.
+     */
     private static function returnSuccessResponse($response)
     {
         http_response_code(200);
         echo json_encode($response);
     }
 
+    /**
+     * Writes the json error response.
+     *
+     * @param integer $code The error code to be returned in the response
+     * @param string $response The error message to be returned in the response
+     */
     private static function returnErrorResponse($code, $response)
     {
         http_response_code($code);

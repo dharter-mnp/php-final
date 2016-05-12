@@ -1,17 +1,16 @@
 <?php
-//var_dump($_POST);
+/**
+ * Created by PhpStorm.
+ * @author DHarter
+ * Date: 5/4/2016.
+ * Time: 2:11 PM
+ */
+
 use function mvc\call;
 use function mvc\getControllers;
 
 require_once($_SERVER['DOCUMENT_ROOT'] . "/../routes.php");
 
-
-/**
- * Created by PhpStorm.
- * User: DHarter
- * Date: 5/4/2016.
- * Time: 2:11 PM
- */
 if (isset($_SERVER['PATH_INFO'])) {
     $path = explode("/", $_SERVER['PATH_INFO']);
     if (count($path) <= 1) {
@@ -59,6 +58,7 @@ switch ($method) {
         http_response_code(500);
         break;
 }
+
 // check that the requested controller and action are both allowed
 // if someone tries to access something else he will be redirected to the error action of the pages controller
 $controllers = getControllers();
